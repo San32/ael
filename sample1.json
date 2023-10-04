@@ -1,0 +1,101 @@
+{
+	"auto_run" : "True",
+	"up": {
+		"cam1": {
+			"cam": {
+				"url": "rtsp://admin:asdQWE12!%40@101.122.3.11:558/LiveChannel/22/media.smp",
+				"use": true
+			},
+			"detect": {
+				"door_open": "0.5",
+				"door_close": "0.5",
+				"wheelchair": "0.75",
+				"stroller": "0.75",
+				"silvercar": "0.75",
+				"scuter": "0.75"
+			},
+			"poi": {
+				"use": true,
+				"x": "3",
+				"y": "5",
+				"e_x": "391",
+				"e_y": "290"
+			}
+		},
+		"cam2": {
+			"cam": {
+				"url": "rtsp://admin:asdQWE12!%40@101.122.3.11:558/LiveChannel/28/media.smp",
+				"use": true
+			},
+			"detect": {
+				"door_open": "0.5",
+				"door_close": "0.5",
+				"wheelchair": "0.75",
+				"stroller": "0.75",
+				"silvercar": "0.75",
+				"scuter": "0.75"
+			},
+			"poi": {
+				"use": true,
+				"x": "67",
+				"y": "12",
+				"e_x": "324",
+				"e_y": "277"
+			}
+		},
+		"io": {
+			"value_io_ip": "10.128.17.49",
+			"value_io_relay_port": "0",
+			"value_io_delay_time": "5"
+		}
+	},
+	"dn": {
+		"cam1": {
+			"cam": {
+				"url": "rtsp://admin:asdQWE12!%40@101.122.3.11:558/LiveChannel/17/media.smp",
+				"use": true
+			},
+			"detect": {
+				"door_open": "0.5",
+				"door_close": "0.5",
+				"wheelchair": "0.75",
+				"stroller": "0.75",
+				"silvercar": "0.75",
+				"scuter": "0.75"
+			},
+			"poi": {
+				"use": true,
+				"x": "32",
+				"y": "4",
+				"e_x": "363",
+				"e_y": "289"
+			}
+		},
+		"cam2": {
+			"cam": {
+				"url": "rtsp://admin:asdQWE12!%40@101.122.3.11:558/LiveChannel/25/media.smp",
+				"use": true
+			},
+			"detect": {
+				"door_open": "0.5",
+				"door_close": "0.5",
+				"wheelchair": "0.75",
+				"stroller": "0.75",
+				"silvercar": "0.75",
+				"scuter": "0.75"
+			},
+			"poi": {
+				"use": true,
+				"x": "70",
+				"y": "7",
+				"e_x": "232",
+				"e_y": "283"
+			}
+		},
+		"io": {
+			"value_io_ip": "10.128.17.49",
+			"value_io_relay_port": "5",
+			"value_io_delay_time": "5"
+		}
+	}
+}
