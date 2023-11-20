@@ -8,14 +8,15 @@ from PyQt5.QtCore import *
 from PyQt5.QtTest import *
 import numpy as np
 
+from common import *
+## global 상수 사용 : CAM_STAT = ("RUN_OK", "RUN_FAIL", "READ_OK" , "READ_FAIL")
 
 class VideoThread(QThread):
     change_pixmap_signal = pyqtSignal(np.ndarray)
-    change_state_signal = pyqtSignal(str)
-    log_signal = pyqtSignal(str)
+    
+    change_state_signal = pyqtSignal(int, str) ## global RUN, PLAY, STOP, READ_FAIL
 
-    PLAY = "PLAY"
-    STOP = "STOP"
+    log_signal = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -23,56 +24,114 @@ class VideoThread(QThread):
         self._show_flag = False # 직접 바로 보낸다
         self.name = None
         self.vi = None
+        self.tag = 0
+        self.fps = 0
         self.cap = None
         self.set_size = None
-        self.state = 0 ###{0: run 종료, 10: run 진입, 11:정상읽음, 12:읽기 실패 }
+        # self.state = 0 ###{0: run 종료, 10: run 진입, 11:정상읽음, 12:읽기 실패 }
 
         # self.default_img = cv2.imread('0017.jpg')
         # self.default_img =  self.load_default_img()
-        self.default_img =  np.full(shape=(480, 640, 3), fill_value=200, dtype=np.uint8)
+        self.default_img =  np.full(shape=(300, 400, 3), fill_value=200, dtype=np.uint8)
 
         # self.disconnect_img =  self.load_disconnect_img()
         self.last_cv_img = self.default_img
 
-    def __del__(self):
-        self._run_flag = False
-        self._show_flag = False
-        if not self.cap is None:
-            if self.cap.isOpen():
-                print('카메라 오픈 되어 있음')
-                self.cap.release()
-            # sys.exit(0)
+        self.change_state(CAM_STAT[4])  ## CAM_STAT =  ("RUN_FAIL", "RUN_OK", "READ_FAIL", "READ_OK", "Disconnect")
 
-    def set_vi(self, vi, name):
+    def __del__(self):
+        pass
+        # self._run_flag = False
+        # self._show_flag = False
+        # if not self.cap is None:
+        #     if self.cap.isOpen():
+        #         print('카메라 오픈 되어 있음')
+        #         self.cap.release()
+        #     # sys.exit(0)
+
+    def set_init(self, vi, name, tag, w, h):
         self.vi = vi
         self.name = name
-        
-    def set_img_size(self, w, h):
         self.set_size = w, h
+        self.tag = tag
 
-    def load_default_img(self, path = None):
-        if path != None:
-            img = QPixmap(path)
-        else:
-            img = np.full(shape=(480, 640, 3), fill_value=100, dtype=np.uint8)
+    # def set_vi(self, vi, name):
+    #     self.vi = vi
+    #     self.name = name
+        
+    # def set_img_size(self, w, h):
+    #     self.set_size = w, h
 
-        return img
-
-    def load_disconnect_img(self, path = None):
-        if path != None:
-            img = QPixmap(path)
-        else:
-            img = np.zeros((640, 480, 3), dtype=np.uint8 )
-
-        return img
 
     def send_log(self, msg):
         # self.log_signal.emit(f'{self.name}:{msg}')
         print(f'{self.name}:{msg}')
 
- 
-    ## 계속 읽음
+     ## 계속 읽음
     def run(self):
+
+        
+
+        # FPS 계산을 위한 변수 초기화
+        frame_count = 0
+        start_time = time.time()
+        fps = 0
+
+        # capture from web cam
+        # self.change_state(CAM_STAT[1])  ## CAM_STAT = ("RUN_FAIL", "RUN_OK", "READ_FAIL", "READ_OK")
+        # self.state = 10 ###{0: run 종료, 10: run 진입, 11:정상읽음, 12:읽기 실패 }
+        try:
+            # self.change_state(self.PLAY)
+            self.cap = cv2.VideoCapture(self.vi)
+            if self.cap.isOpened(): 
+                self.change_state(CAM_STAT[1])  ## CAM_STAT = ("RUN_FAIL", "RUN_OK", "READ_FAIL", "READ_OK")
+                width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+                height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                self.send_log('original size: %d, %d' % (width, height))
+
+                self.send_log(f'video start {self.vi}')
+                while self._run_flag:
+                    ret, cv_img = self.cap.read()
+                    if ret:
+                        #크기 변환 해서 저장
+                        self.last_cv_img = cv2.resize(cv_img, self.set_size, interpolation=cv2.INTER_AREA)
+                        self.change_state(CAM_STAT[3])  ## CAM_STAT = ("RUN_FAIL", "RUN_OK", "READ_FAIL", "READ_OK")
+
+                        ## 1초마다 FPS를 업데이트하고 출력
+                        frame_count += 1
+                        if time.time() - start_time >= 1:
+                            fps = frame_count / (time.time() - start_time)
+                            # print(f"[{self.name}] FPS: {fps:.2f}")
+                            self.fps = f"FPS: {fps:.2f}"
+                            frame_count = 0
+                            start_time = time.time()
+
+                        ## 글자가 깜빡이지 않기 위해 계속 표출해야함.
+                        # fps_text = f"FPS: {fps:.2f}"
+                        # cv2.putText(frame, fps_text, self.fps_org, self.font, 0.5, (255,0,0),2)
+
+                    else:
+                        # self.last_cv_img = self.default_img
+                        # self.send_log(f"read : {ret} ..... break")
+                        # self.change_state(CAM_STAT[2])  ## CAM_STAT = ("RUN_FAIL", "RUN_OK", "READ_FAIL", "READ_OK")
+                        self.cap.release()
+                        self.send_log(f"vt run stop")
+                        self.change_state(CAM_STAT[2]) ## CAM_STAT = ("RUN_FAIL", "RUN_OK", "READ_FAIL", "READ_OK")
+                        break
+                    cv2.waitKey(50)
+                self.cap.release()
+            self.change_state(CAM_STAT[0]) ## CAM_STAT = ("RUN_FAIL", "RUN_OK", "READ_FAIL", "READ_OK")
+            
+        except Exception as e:
+            # self.send_msg.emit('%s' % e)
+            self.send_log(f"[{self.name}]  start Video exception : {e}..... break")
+            self.change_state(CAM_STAT[0]) ## CAM_STAT = ("RUN_FAIL", "RUN_OK", "READ_FAIL", "READ_OK")
+
+
+        
+
+    ## 백업 2023.10.25
+    def run_old(self):
         # capture from web cam
         # self.change_pixmap_signal.emit(self.default_img)
         self._run_flag = True
@@ -129,11 +188,11 @@ class VideoThread(QThread):
         self.send_log(f"vt run stop")
         
     @pyqtSlot()
-    def auto_show(self):
+    def auto_run(self):
         """Sets run flag to False and waits for thread to finish"""
         self.send_log(f'auto start')
         self._run_flag = True
-        self._show_flag = True
+        # self._show_flag = True
         self.start()
         # self.wait()
 
@@ -149,8 +208,8 @@ class VideoThread(QThread):
         # print(self.last_cv_img.shape)
         # self.change_pixmap_signal.emit(self.last_cv_img)
         img = self.last_cv_img
-        self.last_cv_img = self.default_img
-        return img
+        # self.last_cv_img = self.default_img
+        return img, self.fps
 
     @pyqtSlot()
     def get_img_default(self):
@@ -158,13 +217,13 @@ class VideoThread(QThread):
 
 
     def change_state(self, stat):
-        self.send_log(f'vt : {stat}')
-        self.change_state_signal.emit(stat)
-        self.state = stat
+        # self.send_log(f'vt : {stat}')
+        self.change_state_signal.emit(self.tag, stat)
+        # self.state = stat
 
 class ImgLabel(QLabel):
     # ResizeSignal = pyqtSignal(int)
-    signal_rect = pyqtSignal(QRect)
+    signal_rect = pyqtSignal(int,bool, QRect)
     log_signal = pyqtSignal(str)
 
     def __init__(self):
@@ -174,13 +233,15 @@ class ImgLabel(QLabel):
         self._flag_show_text = False
         self._flag_draw_rect = False
 
-        self.text_str = "text"
+        ## 여러개의 문자열 표출
+        self.list_text = [ ]  ## (10,10,"test"), (100,100,"test") // x, y, "text"
+        self.tag = 0 ## signal_rect 를 어느 이미지에서 보냈는지 확인하기 위한 tag
 
         self.begin = QPoint()
         self.end = QPoint()
 
-        self.begin_rect = QPoint()
-        self.end_rect = QPoint()
+        # self.begin_rect = QPoint()
+        # self.end_rect = QPoint()
 
         # self.disconnect_img = self.load_disconnect_img()
 
@@ -196,6 +257,49 @@ class ImgLabel(QLabel):
 
         self.load_default_img()
 
+        self.init_contextmenu()
+
+    ## popup 메뉴 
+    def init_contextmenu(self):
+        self.setContextMenuPolicy(Qt.ActionsContextMenu)
+
+        act_draw = QAction("poi 설정" , self)
+        act_save = QAction("poi 저장" , self)
+        act_no_use = QAction("poi 사용안함" , self)
+
+        # action1.setData(self.list_img[i])
+        # action2.setData(self.list_img[i])
+
+        act_draw.triggered.connect(self.click_act_draw)
+        act_save.triggered.connect(self.click_act_save)
+        act_no_use.triggered.connect(self.click_act_no_use)
+
+        self.addAction(act_draw)
+        self.addAction(act_save)
+        self.addAction(act_no_use)
+        
+    def click_act_draw(self):
+        self.show_ract(True)
+        self.draw_ract(True)
+
+    def click_act_save(self):
+        # print(f'rect   begin: {self.begin.x()}, {self.begin.y()}  end: {self.end.x()}, {self.end.y()}')
+        self.show_ract(False)
+        self.draw_ract(False)
+        self.signal_rect.emit(self.tag, bool(True), QRect(self.begin, self.end))
+
+
+    def click_act_no_use(self):
+        # print(f'no use...')
+        self.begin = QPoint(0, 0)
+        self.end = QPoint(400-1, 300-1)
+        # print(f'rect   begin: {self.begin.x()}, {self.begin.y()}  end: {self.end.x()}, {self.end.y()}')
+        self.signal_rect.emit(self.tag, bool(False), QRect(self.begin, self.end))
+
+    ## popup 메뉴 end
+
+
+
     def send_log(self, msg):
         self.log_signal.emit(msg)
 
@@ -209,11 +313,6 @@ class ImgLabel(QLabel):
 
         self.update()
         
-    # def load_disconnect_img(self, path = None):
-    #     image = np.full(shape=(640, 480, 3), fill_value=255, dtype=np.uint8)
-        
-    #     return image
-
     def paintEvent(self, event):
         if not self.pix.isNull():
             
@@ -233,37 +332,43 @@ class ImgLabel(QLabel):
                 painter.setBrush(br)
                 painter.drawRect(QRect(self.begin, self.end))
                 # print(f'begin: {self.begin.x()}, {self.begin.y()}  end: {self.end.x()}, {self.end.y()}')
-                # self.signal_rect.emit(QRect(self.begin, self.end))
-
+                
             if self._flag_show_text:
                 painter.setFont(QFont('Times New Roman', 11))
-                painter.drawText(5, 20, self.text_str)
+                # painter.drawText(10, 290, self.text_str)
+
+                ## 여러개의 문자 표시
+                # print(f'{self.list_text}')
+                for i, j in enumerate(self.list_text):
+                    painter.drawText(j[0], j[1], j[2])
+
         else:
             print("pix null")
 
+    ## 마우스 이벤트
     def mousePressEvent(self, event):
         # pass
-        if self._flag_draw_rect:
-            self.begin = event.pos()
-            self.end = event.pos()
-            self.update()
-        # print(f'press {self.begin}, {self.end}')
-
+        if event.button() == Qt.LeftButton:
+            # pass
+            if self._flag_draw_rect:
+                self.begin = event.pos()
+                self.end = event.pos()
+                self.update()
+                # print(f'press {self.begin}, {self.end}')
+        
     def mouseMoveEvent(self, event):
         if self._flag_draw_rect:
             self.applye_event(event)
             self.update()
-            # pass
             # print(f'move {event.x()}, {event.y()}')
 
     def mouseReleaseEvent(self,event):
-        # print(f'Release {event.x()}, {event.y()}')
-        if self._flag_draw_rect:
-            self.applye_event(event)
+        if event.button() == Qt.LeftButton:
+            if self._flag_draw_rect:
+                self.applye_event(event)
+                # print(f'Release {event.x()}, {event.y()}')
 
     def applye_event(self, event):
-
-        # if self.state == BUILDING_SQUARE:
         self.end = event.pos()
 
     @pyqtSlot(np.ndarray)
@@ -400,6 +505,7 @@ class Win_view(QWidget):
     def init_ui(self):
         # create the label that holds the image
         self.image_label = ImgLabel()
+        self.image_label.setFixedSize(400, 300)
         self.image_label._flag_draw = True
 
         self.cont_panel = Cont_panel()
@@ -410,13 +516,13 @@ class Win_view(QWidget):
         main_layout.addWidget(self.cont_panel)
 
         self.setLayout(main_layout)
-        self.resize(600,400)
+        # self.resize(600,400)
 
 
         
     def init_set(self):
-        # vi = "rtsp://admin:asdQWE12!%40@101.122.3.11:558/LiveChannel/20/media.smp"
-        vi = "rtsp://101.100.3.151/1/stream3"
+        vi = "rtsp://admin:asdQWE12!%40@101.122.3.11:558/LiveChannel/20/media.smp"
+        # vi = "rtsp://101.100.3.151/1/stream3"
         # create the video capture thread
         self.thread = VideoThread()
         self.thread.set_vi(vi, vi)
@@ -440,10 +546,10 @@ class Win_view(QWidget):
         vi = "rtsp://admin:asdQWE12!%40@101.122.3.11:558/LiveChannel/20/media.smp"
         # create the video capture thread
         self.thread = VideoThread()
-        self.thread.set_img_size = 640, 480
+        self.thread.set_img_size = 400, 300
         # self.thread.set_vi = vi
         self.thread.change_pixmap_signal.connect(self.image_label.changePixmap)
-        self.thread.auto_show()
+        self.thread.auto_run()
 
 
     def closeEvent(self, event):

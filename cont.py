@@ -27,10 +27,58 @@ class Cont(QTextEdit):
         self.door_open = False
         self.called = False
 
+        self.init_cont_contextmenu()
+
         self.last_open_time = time.time()
         self.last_close_time = time.time()
         self.last_detect_time = time.time()
         self.last_call_time = time.time()
+
+    ## popup 메뉴 
+    def init_cont_contextmenu(self):
+        
+
+        # self.detect_wheelchair_signal.connect(self.cont.detect_wheelchair)
+        # self.detect_stroller_signal.connect(self.cont.detect_stroller)
+        # self.detect_silvercar_signal.connect(self.cont.detect_silvercar)
+        # self.detect_scuter_signal.connect(self.cont.detect_scuter)
+        # self.detect_open_signal.connect(self.cont.detect_open)
+        # self.detect_closer_signal.connect(self.cont.detect_close)
+        # self.detect_call_signal.connect(self.cont.detect_call)
+
+        self.setContextMenuPolicy(Qt.ActionsContextMenu)
+
+        act_open = QAction("출입문 열림" , self)
+        act_close = QAction("출입문 닫힘" ,self)
+        act_whe = QAction("휠체어" ,self)
+        act_scu = QAction("스쿠터" ,self)
+        act_sto = QAction("유모차" ,self)
+        act_sil = QAction("실버카" ,self)
+        act_push = QAction("E/L 호출" ,self)
+
+        # act_open.setData(self.list_cont[i])
+        # act_close.setData(self.list_cont[i])
+        # act_whe.setData(self.list_cont[i])
+        # act_scu.setData(self.list_cont[i])
+        # act_sto.setData(self.list_cont[i])
+        # act_sil.setData(self.list_cont[i])
+        # act_push.setData(self.list_cont[i])
+
+        act_open.triggered.connect(self.detect_open)  #self.detect_wheelchair
+        act_close.triggered.connect(self.detect_close)
+        act_whe.triggered.connect(self.detect_wheelchair)
+        act_scu.triggered.connect(self.detect_scuter)
+        act_sto.triggered.connect(self.detect_stroller)
+        act_sil.triggered.connect(self.detect_silvercar)
+        act_push.triggered.connect(self.detect_call)
+
+        self.addAction(act_open)
+        self.addAction(act_close)
+        self.addAction(act_whe)
+        self.addAction(act_scu)
+        self.addAction(act_sto)
+        self.addAction(act_sil)
+        self.addAction(act_push)
 
 
     def init_io(self, data):
@@ -39,9 +87,9 @@ class Cont(QTextEdit):
         self.io_relay_port = int(data['value_io_relay_port'])
         self.io_delay_time = int(data['value_io_delay_time'])
         self.io = E1214(self.io_ip, self.io_port)
-        # self.io = E1214(self.ip, self.port)
 
-        # self.e1214 = ModbusClient(host=self.io_ip, port=self.io_port, unit_id=1, auto_open=True)
+        ## 값 확인
+        # print(f"self.io_ip:{self.io_ip} self.io_port:{self.io_port} self.io_relay_port:{self.io_relay_port} self.io_delay_time:{self.io_delay_time} ")
 
         arr_relay = [0, 0, 0, 0, 0, 0]
         self.io.e1214.write_multiple_coils(0, arr_relay)
@@ -132,12 +180,65 @@ class Cont(QTextEdit):
             else: 
                 self.append_log(f"문 닫힘 후 {self.io_delay_time}초 미만")
 
+    ##  외부에서 콜을 던질때 사용
+    @pyqtSlot()
+    def detect_wheelchair(self):
+        dict = {"wheelchair": 0.9}
+        self.receive_data("Test", dict)
+
+    @pyqtSlot()
+    def detect_stroller(self):
+        dict = {"stroller": 0.9}
+        self.receive_data("Test",dict)
+
+    @pyqtSlot()
+    def detect_silvercar(self):
+        dict = {"silvercar": 0.9}
+        self.receive_data("Test",dict)
+
+    @pyqtSlot()
+    def detect_scuter(self):
+        dict = {"scuter": 0.9}
+        self.receive_data("Test",dict)
+
+    @pyqtSlot()
+    def detect_open(self):
+        dict = {"door_open":0.9}
+        self.receive_data("Test",dict)
+
+    @pyqtSlot()
+    def detect_close(self):
+        dict = {"door_close":0.9}
+        self.receive_data("Test",dict)
+
+    @pyqtSlot()
+    def detect_call(self):
+        self.push_call()
+
 class Panel_cont_btn(QWidget):
+    detect_wheelchair_signal = pyqtSignal()
+    detect_stroller_signal = pyqtSignal()
+    detect_silvercar_signal = pyqtSignal()
+    detect_scuter_signal = pyqtSignal()
+    detect_open_signal = pyqtSignal()
+    detect_closer_signal = pyqtSignal()
+    detect_call_signal = pyqtSignal()
+
     def __init__(self, cont):
         super().__init__()
         self.cont = cont
 
         self.init_ui()
+        self.init_signal()
+
+    def init_signal(self):
+        self.detect_wheelchair_signal.connect(self.cont.detect_wheelchair)
+        self.detect_stroller_signal.connect(self.cont.detect_stroller)
+        self.detect_silvercar_signal.connect(self.cont.detect_silvercar)
+        self.detect_scuter_signal.connect(self.cont.detect_scuter)
+        self.detect_open_signal.connect(self.cont.detect_open)
+        self.detect_closer_signal.connect(self.cont.detect_close)
+        self.detect_call_signal.connect(self.cont.detect_call)
     
     def init_ui(self):
 
@@ -149,16 +250,15 @@ class Panel_cont_btn(QWidget):
         self.btn_scuter = QPushButton("scuter")
         self.btn_door_open = QPushButton("door_open")
         self.btn_door_close = QPushButton("door_close")
-
         self.btn_io_R1 = QPushButton("push call")
 
-        self.btn_wheelchair.clicked.connect(self.detect_wheelchair)
-        self.btn_stroller.clicked.connect(self.detect_stroller)
-        self.btn_silvercar.clicked.connect(self.detect_silvercar)
-        self.btn_scuter.clicked.connect(self.detect_scuter)
-        self.btn_door_open.clicked.connect(self.open)
-        self.btn_door_close.clicked.connect(self.close)
-        self.btn_io_R1.clicked.connect(self.click_io_R1)
+        self.btn_wheelchair.clicked.connect(self.detect_wheelchair_signal.emit)
+        self.btn_stroller.clicked.connect(self.detect_stroller_signal.emit)
+        self.btn_silvercar.clicked.connect(self.detect_silvercar_signal.emit)
+        self.btn_scuter.clicked.connect(self.detect_scuter_signal.emit)
+        self.btn_door_open.clicked.connect(self.detect_open_signal.emit)
+        self.btn_door_close.clicked.connect(self.detect_closer_signal.emit)
+        self.btn_io_R1.clicked.connect(self.detect_call_signal.emit)
 
         btn_layout.addWidget(self.btn_wheelchair)
         btn_layout.addWidget(self.btn_stroller)
@@ -170,32 +270,32 @@ class Panel_cont_btn(QWidget):
 
         self.setLayout(btn_layout)
 
-    def detect_wheelchair(self):
-        dict = {"wheelchair": 0.9}
-        self.cont.receive_data("Test", dict)
+    # def detect_wheelchair(self):
+    #     print(f"detect_wheelchair")
+    #     self.detect_wheelchair_signal.emit()
 
-    def detect_stroller(self):
-        dict = {"stroller": 0.9}
-        self.cont.receive_data("Test",dict)
+    # def detect_stroller(self):
+    #     dict = {"stroller": 0.9}
+    #     self.cont.receive_data("Test",dict)
 
-    def detect_silvercar(self):
-        dict = {"silvercar": 0.9}
-        self.cont.receive_data("Test",dict)
+    # def detect_silvercar(self):
+    #     dict = {"silvercar": 0.9}
+    #     self.cont.receive_data("Test",dict)
 
-    def detect_scuter(self):
-        dict = {"scuter": 0.9}
-        self.cont.receive_data("Test",dict)
+    # def detect_scuter(self):
+    #     dict = {"scuter": 0.9}
+    #     self.cont.receive_data("Test",dict)
 
-    def open(self):
-        dict = {"door_open":0.9}
-        self.cont.receive_data("Test",dict)
+    # def open(self):
+    #     dict = {"door_open":0.9}
+    #     self.cont.receive_data("Test",dict)
 
-    def close(self):
-        dict = {"door_close":0.9}
-        self.cont.receive_data("Test",dict)
+    # def close(self):
+    #     dict = {"door_close":0.9}
+    #     self.cont.receive_data("Test",dict)
 
-    def click_io_R1(self):
-        self.cont.push_call()
+    # def click_io_R1(self):
+    #     self.cont.push_call()
 
 
 

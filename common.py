@@ -4,15 +4,28 @@ import time
 from PIL import Image,ImageTk,ImageFont
 
 global path_config
+
+global RUN_OK 
+global RUN_FAIL
+global READ_OK
+global READ_FAIL
+
 # global pwd
 
 font_path = "/home/nvidia/work/auto_el/data/NanumMyeongjoBold.ttf"
 font = ImageFont.truetype(font_path, 20)
 
 pwd = "/home/comm/conda_work/git_test/ael/"
-path_config = pwd + "sample1.json"
+# path_config = pwd + "sample1.json"
+path_config = pwd + "config.json"
 
 path_disconnect_file = pwd + 'disconnect.png'
+
+CAM_STAT = ("RUN_FAIL", "RUN_OK", "READ_FAIL", "READ_OK", "연결 끊어짐")
+# RUN_OK = 1
+# RUN_FAIL = 0
+# READ_OK = 11
+# READ_FAIL = 10
 
 def read_config(file_path):
     try:

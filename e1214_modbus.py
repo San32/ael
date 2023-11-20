@@ -71,7 +71,7 @@ class E1214(QWidget):
         # print(f'{sending_button.objectName()}이 선택되었습니다!')
 
         count = 0
-        fail = False  # on의 실퍠 여부 판단
+        fail = False  # on의 실패 여부 판단
         while True:
             if self.e1214.write_single_coil(no, 1): # close
                 QTest.qWait(100)
@@ -79,7 +79,7 @@ class E1214(QWidget):
             else:
                 count = count +1
                 if count > 5:
-                    fail = True # on 실행 실퍠
+                    fail = True # on 실행 실패
                     break
 
         if fail == True:
@@ -194,7 +194,7 @@ class DI_Label(QLabel):
 
     def __init__(self, title):
         QLabel.__init__(self, title)
-        self.setFixedSize(100, 30)
+        # self.setFixedSize(100, 30)
         self.setAlignment(Qt.AlignCenter)
         self.set_state(False)
 
@@ -216,7 +216,7 @@ class R_Label(QLabel):
 
     def __init__(self, title):
         QLabel.__init__(self, title)
-        self.setFixedSize(100, 30)
+        # self.setFixedSize(100, 30)
         self.setAlignment(Qt.AlignCenter)
         self.set_state(False)
 
@@ -229,7 +229,7 @@ class R_Label(QLabel):
         self.setText({True: self.r_close[1], False: self.r_open[1]}[state])
 
 
-class Win_io(QDialog):
+class Win_io(QWidget):
     def __init__(self, ip, port):
         super().__init__()
 
@@ -237,12 +237,14 @@ class Win_io(QDialog):
         self.port = port
         self.io = E1214(self.ip, self.port)
 
+        self.label_style = "color: white; border-style: solid; border-color: #54A0FF; background-color: rgb(0,0,0)"
+
         
         self.init_ui()
         self.title = f"I/O 제어기 {self.ip}"
         self.setWindowTitle(f"{self.title}") ## 연결상태를 뒤에 붙여서 표시
 
-        self.show()
+        # self.show()
         self.init_timer()  ##주기적으로 상태 업데이트
 
         
@@ -263,6 +265,7 @@ class Win_io(QDialog):
         cont_layout = QHBoxLayout()
 
         label = QLabel("Relay 제어")
+        label.setStyleSheet(self.label_style)
         label.setMinimumSize(100, 100)
         label.setAlignment(Qt.AlignCenter)
         cont_layout.addWidget(label)
@@ -296,6 +299,7 @@ class Win_io(QDialog):
         cont_layout = QHBoxLayout()
 
         label = QLabel("E/L 호출")
+        label.setStyleSheet(self.label_style)
         label.setMinimumSize(100, 100)
         label.setAlignment(Qt.AlignCenter)
         cont_layout.addWidget(label)
@@ -357,6 +361,7 @@ class Win_io(QDialog):
         #타이틀
         box_label = QHBoxLayout()
         label = QLabel("구분")
+        label.setStyleSheet(self.label_style)
         label.setMinimumSize(100, 30)
         label.setAlignment(Qt.AlignCenter)
         box_label.addWidget(label)
@@ -371,6 +376,8 @@ class Win_io(QDialog):
         #DI
         box_di = QHBoxLayout()
         label = QLabel("DI 상태")
+        label.setStyleSheet(self.label_style)
+        label.setMinimumSize(100, 30)
         label.setAlignment(Qt.AlignCenter)
         box_di.addWidget(label)
         for i in range(6):
@@ -382,6 +389,7 @@ class Win_io(QDialog):
         ##### Relay box
         box_R = QHBoxLayout()
         label = QLabel("Relay 상태")
+        label.setStyleSheet(self.label_style)
         label.setMinimumSize(100, 30)
         label.setAlignment(Qt.AlignCenter)
         box_R.addWidget(label)
@@ -395,6 +403,7 @@ class Win_io(QDialog):
         ##### push Relay 
         box_call = QHBoxLayout()
         label = QLabel("Push Call")
+        label.setStyleSheet(self.label_style)
         label.setMinimumSize(100, 30)
         label.setAlignment(Qt.AlignCenter)
         box_call.addWidget(label)

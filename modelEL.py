@@ -49,7 +49,9 @@ class Model(QWidget):
 
         self.colors = Colors()
 
-        self.load_model(self.yolov5_path, self.el_pt_path)
+        ## 모델 다변화
+        self.load_model_el(self.yolov5_path, self.el_pt_path)
+        # self.load_model_v5(self.yolov5_path, self.v5_pt_path)
 
 
     def infer_img(self, cv_img, detect_list):
@@ -80,11 +82,24 @@ class Model(QWidget):
             print(f"put_text : {e}")
         return frame
 
-    def load_model(self, yolov5_path, pt_path):
+    def load_model_el(self, yolov5_path, pt_path):
 
         try:
             # model1 = torch.hub.load('ultralytics/yolov5', 'yolov5s')
             self.model = torch.hub.load(yolov5_path, 'custom', source='local', path=pt_path, force_reload=True)
+
+            self.classes = self.model.names
+            self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            print(f'model type : {type(self.model)}')
+
+        except Exception as e:
+            print(f"load_model exception : {e}")
+
+    def load_model_v5(self, yolov5_path, pt_path):
+
+        try:
+            self.model = torch.hub.load(yolov5_path, 'yolov5s')
+            # self.model = torch.hub.load(yolov5_path, 'custom', source='local', path=pt_path, force_reload=True)
 
             self.classes = self.model.names
             self.device = 'cuda' if torch.cuda.is_available() else 'cpu'

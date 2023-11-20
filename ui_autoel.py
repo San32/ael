@@ -13,9 +13,10 @@ import numpy as np
 from common import *
 from camera import *
 from cont import *
+from ui_config import *
 
 
-class panel_floor(QWidget):
+class Panel_floor(QWidget):
     def __init__(self):
         super().__init__()
         # self.set_config()
@@ -64,14 +65,11 @@ class panel_floor(QWidget):
 
         self.edit_cont = Cont()
         
-        self.panel_cont_btn = Panel_cont_btn(self.edit_cont)
-        # self.edit_cont = QTextEdit()
 
         self.label_title.setFixedSize(self.title_w, self.title_h)
         self.img_cam1.setFixedSize(self.img_w, self.img_h)
         self.img_cam2.setFixedSize(self.img_w, self.img_h)
         self.edit_cont.setFixedSize(300, self.cont_h)
-        self.panel_cont_btn.setFixedSize(110, self.cont_h)
 
         self.label_title.setStyleSheet("color: white;"
                       "border-style: solid;"
@@ -82,15 +80,30 @@ class panel_floor(QWidget):
         # self.cam1.setStyleSheet("color: white; border: 1px solid black; background-color: black;")
         # self.cam2.setStyleSheet("color: white; border: 1px solid black; background-color: black;")
 
-        hbox = QHBoxLayout()
-        hbox.addWidget(self.label_title)
-        hbox.addWidget(self.img_cam1)
-        hbox.addWidget(self.img_cam2)
-        hbox.addWidget(self.edit_cont)
-        hbox.addWidget(self.panel_cont_btn)
+        box_cam = QHBoxLayout()
+        box_cam.addWidget(self.label_title)
+        box_cam.addWidget(self.img_cam1)
+        box_cam.addWidget(self.img_cam2)
+        box_cam.addWidget(self.edit_cont)
 
+        ## 콘트롤을 위한 위젯 생성
+        self.conf_cam1 = ELCam_conf_ui2("cam1")
+        self.conf_cam2 = ELCam_conf_ui2("cam2")
+        self.chk_poi = QCheckBox("관심영역")
+        self.chk_poi2 = QCheckBox("test2")
 
-        self.setLayout(hbox)
+        box_info = QHBoxLayout()
+        box_info.addWidget(self.conf_cam1)
+        box_info.addWidget(self.conf_cam2)
+        # box_info.addWidget(self.chk_poi)
+        # box_info.addWidget(self.chk_poi2)
+
+        ## main box
+        box_main = QVBoxLayout()
+        box_main.addLayout(box_cam)
+        # box_main.addLayout(box_info)
+
+        self.setLayout(box_main)
         
 
 
@@ -100,8 +113,8 @@ class UI_autoel(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        self.up_floor = panel_floor()
-        self.dn_floor = panel_floor()
+        self.up_floor = Panel_floor()
+        self.dn_floor = Panel_floor()
 
         vbox = QVBoxLayout()
         vbox.addWidget(self.up_floor)
